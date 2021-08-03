@@ -1,4 +1,5 @@
 import os
+import glob
 import requests
 from tqdm import tqdm
 from datetime import datetime
@@ -137,11 +138,6 @@ def plotting(polygon_gdf, result_gdf):
 
 def main():
     basepath = os.path.dirname(os.path.abspath(__file__))
-    polygon_file = f"{basepath}/region/selatbali_map.geojson"
-    polygon_gdf = gpd.read_file(polygon_file)
-    polygon = polygon_gdf.geometry[0].to_wkt()
-    region = os.path.splitext(os.path.basename(polygon_file))[0]
-    download = f"{basepath}/download/{region}"
 
     username = "suhendra0812@gmail.com"
     password = "kuningan08121995"
@@ -152,33 +148,43 @@ def main():
 
     startdate = datetime.strptime(s, "%Y%m%d").strftime("%Y-%m-%d")
     enddate = datetime.strptime(e, "%Y%m%d").strftime("%Y-%m-%d")
-    data = GetData(startdate, enddate, polygon)
-    results = data.get_results()
 
-    results_len = len(results)
-    print(f"Data found: {results_len}")
-    if results_len > 0:
-        for i, result in enumerate(results, start=1):
-            filename = result["properties"]["productIdentifier"]
-            print(f"{i}. {filename}")
+    polygon_files = glob.glob(f"{basepath}/region/*.geojson")
+    print("Region found:", len(polygon_files))
+    for i, polygon_file in enumerate(polygon_files):
+        print(f"{i+1}. Region file: {os.path.basename(polygon_file)}")
+        polygon_gdf = gpd.read_file(polygon_file)
+        polygon = polygon_gdf.geometry[0].to_wkt()
+        region = os.path.splitext(os.path.basename(polygon_file))[0]
+        download = f"{basepath}/download/{region}"
 
-        result_gdf = data.get_geodataframe()
+        data = GetData(startdate, enddate, polygon)
+        results = data.get_results()
 
-        plot_option = input("Plotting (y/n): ")
-
-        if plot_option == "y":
-            fig = plotting(polygon_gdf, result_gdf)
-
-        option = input("Download (y/n): ")
-
-        if option == "y":
+        results_len = len(results)
+        print(f"Data found: {results_len}")
+        if results_len > 0:
             for i, result in enumerate(results, start=1):
-                print(f"Downloading Sentinel 1 ({i}/{len(results)})")
-                url = result["properties"]["services"]["download"]["url"]
                 filename = result["properties"]["productIdentifier"]
                 print(f"{i}. {filename}")
-                output_path = os.path.join(download, f"{filename}.zip")
-                DownloadFile(url, token, output_path).download()
+
+            result_gdf = data.get_geodataframe()
+
+            plot_option = input("Plotting (y/n): ")
+
+            if plot_option == "y":
+                fig = plotting(polygon_gdf, result_gdf)
+
+            option = input("Download (y/n): ")
+
+            if option == "y":
+                for i, result in enumerate(results, start=1):
+                    print(f"Downloading Sentinel 1 ({i}/{len(results)})")
+                    url = result["properties"]["services"]["download"]["url"]
+                    filename = result["properties"]["productIdentifier"]
+                    print(f"{i}. {filename}")
+                    output_path = os.path.join(download, f"{filename}.zip")
+                    DownloadFile(url, token, output_path).download()
 
 
 if __name__ == "__main__":
