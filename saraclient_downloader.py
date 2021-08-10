@@ -164,9 +164,9 @@ def main():
         results_len = len(results)
         print(f"Data found: {results_len}")
         if results_len > 0:
-            for i, result in enumerate(results, start=1):
+            for i, result in enumerate(results):
                 filename = result["properties"]["productIdentifier"]
-                print(f"{i}. {filename}")
+                print(f"{i+1}. {filename}")
 
             result_gdf = data.get_geodataframe()
 
@@ -175,16 +175,23 @@ def main():
             if plot_option == "y":
                 fig = plotting(polygon_gdf, result_gdf)
 
-            option = input("Download (y/n): ")
+            download_option = input("Download (y/n): ")
 
-            if option == "y":
-                for i, result in enumerate(results, start=1):
-                    print(f"Downloading Sentinel 1 ({i}/{len(results)})")
-                    url = result["properties"]["services"]["download"]["url"]
-                    filename = result["properties"]["productIdentifier"]
-                    print(f"{i}. {filename}")
-                    output_path = os.path.join(download, f"{filename}.zip")
-                    DownloadFile(url, token, output_path).download()
+            if download_option == "y":
+                frame_option = input("Frame selection (e.g: 1,2,3,...,n / all): ")
+                if frame_option == "all":
+                    frame_list = list(range(len(results)))
+                else:
+                    frame_list = [int(f)-1 for f in frame_option.split(",")]
+
+                for i, result in enumerate(results):
+                    if i in frame_list:
+                        print(f"Downloading Sentinel 1 ({i+1}/{len(results)})")
+                        url = result["properties"]["services"]["download"]["url"]
+                        filename = result["properties"]["productIdentifier"]
+                        print(f"{i+1}. {filename}")
+                        output_path = os.path.join(download, f"{filename}.zip")
+                        DownloadFile(url, token, output_path).download()
 
 
 if __name__ == "__main__":
