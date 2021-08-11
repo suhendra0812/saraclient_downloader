@@ -175,15 +175,27 @@ def main():
             if plot_option == "y":
                 fig = plotting(polygon_gdf, result_gdf)
 
+                selection = True
+                while selection:
+                    frame_option = input("Frame selection (e.g: 1,2,3,...,n / all): ")
+                    if frame_option == "all":
+                        frame_list = list(range(len(results)))
+                    else:
+                        frame_list = [int(f)-1 for f in frame_option.split(",")]
+                        frame_gdf = result_gdf[result_gdf.index.isin(frame_list)].copy()
+                        plot_option = input("Plotting (y/n): ")
+                        if plot_option == "y":
+                            fig = plotting(polygon_gdf, frame_gdf)
+                    
+                    select_option = input("Continue selection (y/n): ")
+                    if select_option == "y":
+                        selection = True
+                    else:
+                        selection = False
+
             download_option = input("Download (y/n): ")
 
             if download_option == "y":
-                frame_option = input("Frame selection (e.g: 1,2,3,...,n / all): ")
-                if frame_option == "all":
-                    frame_list = list(range(len(results)))
-                else:
-                    frame_list = [int(f)-1 for f in frame_option.split(",")]
-
                 for i, result in enumerate(results):
                     if i in frame_list:
                         print(f"Downloading Sentinel 1 ({i+1}/{len(results)})")
