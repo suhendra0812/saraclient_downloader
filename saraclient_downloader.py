@@ -156,7 +156,7 @@ def main():
         polygon_gdf = gpd.read_file(polygon_file)
         polygon = polygon_gdf.geometry[0].to_wkt()
         region = os.path.splitext(os.path.basename(polygon_file))[0]
-        download = f"{basepath}/download/{region}"
+        download = os.path.join(basepath, "download", region)
 
         data = GetData(startdate, enddate, polygon)
         results = data.get_results()
@@ -166,9 +166,13 @@ def main():
         if results_len > 0:
             for i, result in enumerate(results):
                 filename = result["properties"]["productIdentifier"]
+                polarisation = result["properties"]["polarisation"]
+                orbit_direction = result["properties"]["orbitDirection"] 
                 print(f"{i+1}. {filename}")
+                print(f"-> Polarisation: {polarisation} | Orbit Direction: {orbit_direction}")
 
             result_gdf = data.get_geodataframe()
+            result_gdf.to_csv(os.path.join(download, "results.csv"), index=False)
 
             plot_option = input("Plotting (y/n): ")
 
