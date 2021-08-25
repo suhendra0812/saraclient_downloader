@@ -6,8 +6,12 @@ from datetime import datetime
 from auscophub import saraclient
 import json
 import geopandas as gpd
-import matplotlib.pyplot as plt
-import cartopy.crs as ccrs
+
+try:
+    import matplotlib.pyplot as plt
+    import cartopy.crs as ccrs
+except ModuleNotFoundError:
+    pass
 
 
 class Login:
@@ -60,11 +64,13 @@ class GetData:
         return all_gdf
 
 
-class DownloadFile:
-    def __init__(self, url, token, filename):
+class DownloadFile(Login):
+    def __init__(self, url, filename, username, password):
+        super().__init__(username, password)
         self.url = url
-        self.params = (("_bearer", token),)
         self.filename = filename
+        self.token = self.login()
+        self.params = (("_bearer", self.token),)
 
     def download(self):
         response = requests.get(self.url, self.params, stream=True)
@@ -141,7 +147,6 @@ def main():
 
     username = "suhendra0812@gmail.com"
     password = "kuningan08121995"
-    token = Login(username, password).login()
 
     s = input("startdate (yyyymmdd): ")
     e = input("enddate (yyymmdd): ")
@@ -149,7 +154,7 @@ def main():
     startdate = datetime.strptime(s, "%Y%m%d").strftime("%Y-%m-%d")
     enddate = datetime.strptime(e, "%Y%m%d").strftime("%Y-%m-%d")
 
-    polygon_files = glob.glob(f"{basepath}/region/*.geojson")
+    polygon_files = glob.glob(f"{basepath}/region/ntb.geojson")
     print("Region found:", len(polygon_files))
     for i, polygon_file in enumerate(polygon_files):
         print(f"{i+1}. Region file: {os.path.basename(polygon_file)}")
@@ -157,6 +162,7 @@ def main():
         polygon = polygon_gdf.geometry[0].to_wkt()
         region = os.path.splitext(os.path.basename(polygon_file))[0]
         download = os.path.join(basepath, "download", region)
+        os.makedirs(download, exist_ok=True)
 
         data = GetData(startdate, enddate, polygon)
         results = data.get_results()
@@ -207,7 +213,7 @@ def main():
                         filename = result["properties"]["productIdentifier"]
                         print(f"{i+1}. {filename}")
                         output_path = os.path.join(download, f"{filename}.zip")
-                        DownloadFile(url, token, output_path).download()
+                        DownloadFile(url, output_path, username, password).download()
 
 
 if __name__ == "__main__":
