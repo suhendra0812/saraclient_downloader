@@ -104,8 +104,8 @@ class DownloadFile(Login):
         return response
 
 
-def plotting(polygon_gdf, result_gdf):
-    fig = plt.figure()
+def plotting(polygon_gdf, result_gdf, figsize=(15, 10)):
+    fig = plt.figure(figsize=figsize)
     ax = plt.axes(projection=ccrs.PlateCarree())
     ax.coastlines()
     ax.gridlines(draw_labels=True)
