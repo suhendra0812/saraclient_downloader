@@ -1,4 +1,5 @@
 # SARA Client Downloader
+__SARA Client Downloader__ is a Sentinel data downloader from [Sentinel Australasia Regional Access (SARA)](https://copernicus.nci.org.au/) which provides free access to data from all Sentinel satellites for the South-East Asia and South Pacific region. The script is based on __Australian Regional Copernicus Hub__. In current version, the script download Sentinel 1 data only.
 
 ## Installation
 ### 1. Install auscophub-1.2.1
