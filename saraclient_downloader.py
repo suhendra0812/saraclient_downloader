@@ -1,8 +1,6 @@
 import os
-import glob
 import requests
 from tqdm import tqdm
-from datetime import datetime
 from auscophub import saraclient
 import json
 import geopandas as gpd
@@ -102,6 +100,8 @@ class DownloadFile(Login):
             t.close()
             if total_size != 0 and t.n != total_size:
                 print("ERROR, something went wrong")
+        
+        return response
 
 
 def plotting(polygon_gdf, result_gdf):
@@ -140,81 +140,3 @@ def plotting(polygon_gdf, result_gdf):
     plt.show()
 
     return fig
-
-
-def main():
-    basepath = os.path.dirname(os.path.abspath(__file__))
-
-    username = "suhendra0812@gmail.com"
-    password = "kuningan08121995"
-
-    s = input("startdate (yyyymmdd): ")
-    e = input("enddate (yyymmdd): ")
-
-    startdate = datetime.strptime(s, "%Y%m%d").strftime("%Y-%m-%d")
-    enddate = datetime.strptime(e, "%Y%m%d").strftime("%Y-%m-%d")
-
-    polygon_files = glob.glob(f"{basepath}/region/ntb.geojson")
-    print("Region found:", len(polygon_files))
-    for i, polygon_file in enumerate(polygon_files):
-        print(f"{i+1}. Region file: {os.path.basename(polygon_file)}")
-        polygon_gdf = gpd.read_file(polygon_file)
-        polygon = polygon_gdf.geometry[0].to_wkt()
-        region = os.path.splitext(os.path.basename(polygon_file))[0]
-        download = os.path.join(basepath, "download", region)
-        os.makedirs(download, exist_ok=True)
-
-        data = GetData(startdate, enddate, polygon)
-        results = data.get_results()
-
-        results_len = len(results)
-        print(f"Data found: {results_len}")
-        if results_len > 0:
-            for i, result in enumerate(results):
-                filename = result["properties"]["productIdentifier"]
-                polarisation = result["properties"]["polarisation"]
-                orbit_direction = result["properties"]["orbitDirection"] 
-                print(f"{i+1}. {filename}")
-                print(f"-> Polarisation: {polarisation} | Orbit Direction: {orbit_direction}")
-
-            result_gdf = data.get_geodataframe()
-            result_gdf.to_csv(os.path.join(download, "results.csv"), index=False)
-
-            plot_option = input("Plotting (y/n): ")
-
-            if plot_option == "y":
-                fig = plotting(polygon_gdf, result_gdf)
-
-                selection = True
-                while selection:
-                    frame_option = input("Frame selection (e.g: 1,2,3,...,n / all): ")
-                    if frame_option == "all":
-                        frame_list = list(range(len(results)))
-                    else:
-                        frame_list = [int(f)-1 for f in frame_option.split(",")]
-                        frame_gdf = result_gdf[result_gdf.index.isin(frame_list)].copy()
-                        plot_option = input("Plotting (y/n): ")
-                        if plot_option == "y":
-                            fig = plotting(polygon_gdf, frame_gdf)
-                    
-                    select_option = input("Continue selection (y/n): ")
-                    if select_option == "y":
-                        selection = True
-                    else:
-                        selection = False
-
-            download_option = input("Download (y/n): ")
-
-            if download_option == "y":
-                for i, result in enumerate(results):
-                    if i in frame_list:
-                        print(f"Downloading Sentinel 1 ({i+1}/{len(results)})")
-                        url = result["properties"]["services"]["download"]["url"]
-                        filename = result["properties"]["productIdentifier"]
-                        print(f"{i+1}. {filename}")
-                        output_path = os.path.join(download, f"{filename}.zip")
-                        DownloadFile(url, output_path, username, password).download()
-
-
-if __name__ == "__main__":
-    main()
