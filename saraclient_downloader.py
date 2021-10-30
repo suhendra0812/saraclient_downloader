@@ -57,7 +57,7 @@ class GetData:
             feat_gdf = gpd.read_file(feat_json)
             all_gdf = all_gdf.append(feat_gdf)
 
-        all_gdf.reset_index(drop=True, inplace=True)
+        all_gdf.sort_values(by="startDate", inplace=True, ignore_index=True)
 
         return all_gdf
 
