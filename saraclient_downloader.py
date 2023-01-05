@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import requests
 from tqdm import tqdm
 from auscophub import saraclient
@@ -29,10 +30,15 @@ class Login:
 
 
 class GetData:
-    def __init__(self, startdate, enddate, polygon):
+    def __init__(self, startdate, enddate, polygon: Path | str):
         self.startdate = startdate
         self.enddate = enddate
-        self.polygon = polygon
+        self.polygon = self.get_wkt(polygon)
+
+    @staticmethod
+    def get_wkt(path):
+        gdf = gpd.read_file(path)
+        return gdf.unary_union.wkt
 
     def get_results(self):
         urlOpener = saraclient.makeUrlOpener()
