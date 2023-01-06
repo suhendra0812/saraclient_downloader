@@ -30,7 +30,7 @@ class Login:
 
 
 class GetData:
-    def __init__(self, startdate, enddate, polygon: Path | str):
+    def __init__(self, startdate, enddate, polygon):
         self.startdate = startdate
         self.enddate = enddate
         self.polygon = self.get_wkt(polygon)
